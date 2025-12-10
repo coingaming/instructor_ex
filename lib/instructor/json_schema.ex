@@ -290,7 +290,11 @@ defmodule Instructor.JSONSchema do
   defp for_type(:decimal), do: %{type: "number", format: "float"}
 
   defp for_type(:date),
-    do: %{type: "string", description: "ISO8601 Date, [yyyy]-[mm]-[dd], e.g. \"2024-07-20\"", format: "date"}
+    do: %{
+      type: "string",
+      description: "ISO8601 Date, [yyyy]-[mm]-[dd], e.g. \"2024-07-20\"",
+      format: "date"
+    }
 
   defp for_type(:time),
     do: %{
@@ -302,35 +306,40 @@ defmodule Instructor.JSONSchema do
   defp for_type(:time_usec),
     do: %{
       type: "string",
-      description: "ISO8601 Time with microseconds, [hh]:[mm]:[ss].[microseconds], e.g. \"12:00:00.000000\"",
+      description:
+        "ISO8601 Time with microseconds, [hh]:[mm]:[ss].[microseconds], e.g. \"12:00:00.000000\"",
       pattern: "^[0-9]{2}:?[0-9]{2}:?[0-9]{2}.[0-9]{6}$"
     }
 
   defp for_type(:naive_datetime),
     do: %{
       type: "string",
-      description: "ISO8601 DateTime, [yyyy]-[mm]-[dd]T[hh]:[mm]:[ss], e.g. \"2024-07-20T12:00:00\"",
+      description:
+        "ISO8601 DateTime, [yyyy]-[mm]-[dd]T[hh]:[mm]:[ss], e.g. \"2024-07-20T12:00:00\"",
       format: "date-time"
     }
 
   defp for_type(:naive_datetime_usec),
     do: %{
       type: "string",
-      description: "ISO8601 DateTime with microseconds, [yyyy]-[mm]-[dd]T[hh]:[mm]:[ss].[microseconds], e.g. \"2024-07-20T12:00:00.000000\"",
+      description:
+        "ISO8601 DateTime with microseconds, [yyyy]-[mm]-[dd]T[hh]:[mm]:[ss].[microseconds], e.g. \"2024-07-20T12:00:00.000000\"",
       format: "date-time"
     }
 
   defp for_type(:utc_datetime),
     do: %{
       type: "string",
-      description: "ISO8601 DateTime, [yyyy]-[mm]-[dd]T[hh]:[mm]:[ss]Z, e.g. \"2024-07-20T12:00:00Z\"",
+      description:
+        "ISO8601 DateTime, [yyyy]-[mm]-[dd]T[hh]:[mm]:[ss]Z, e.g. \"2024-07-20T12:00:00Z\"",
       format: "date-time"
     }
 
   defp for_type(:utc_datetime_usec),
     do: %{
       type: "string",
-      description: "ISO8601 DateTime with microseconds, [yyyy]-[mm]-[dd]T[hh]:[mm]:[ss].[microseconds]Z, e.g. \"2024-07-20T12:00:00.000000Z\"",
+      description:
+        "ISO8601 DateTime with microseconds, [yyyy]-[mm]-[dd]T[hh]:[mm]:[ss].[microseconds]Z, e.g. \"2024-07-20T12:00:00.000000Z\"",
       format: "date-time"
     }
 
@@ -451,7 +460,8 @@ defmodule Instructor.JSONSchema do
     |> maybe_call_with_path(fun, path, opts)
   end
 
-  defp do_traverse_and_update(tree, fun, path, opts), do: maybe_call_with_path(tree, fun, path, opts)
+  defp do_traverse_and_update(tree, fun, path, opts),
+    do: maybe_call_with_path(tree, fun, path, opts)
 
   defp maybe_call_with_path(value, fun, path, opts) do
     if Keyword.get(opts, :include_path, false) do

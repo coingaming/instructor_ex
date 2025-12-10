@@ -227,7 +227,8 @@ defmodule JSONSchemaTest do
           "format" => "date-time",
           "title" => "naive_datetime",
           "type" => "string",
-          "description" => "ISO8601 DateTime, [yyyy]-[mm]-[dd]T[hh]:[mm]:[ss], e.g. \"2024-07-20T12:00:00\""
+          "description" =>
+            "ISO8601 DateTime, [yyyy]-[mm]-[dd]T[hh]:[mm]:[ss], e.g. \"2024-07-20T12:00:00\""
         },
         "naive_datetime_usec" => %{
           "format" => "date-time",
@@ -251,13 +252,15 @@ defmodule JSONSchemaTest do
           "pattern" => "^[0-9]{2}:?[0-9]{2}:?[0-9]{2}.[0-9]{6}$",
           "title" => "time_usec",
           "type" => "string",
-          "description" => "ISO8601 Time with microseconds, [hh]:[mm]:[ss].[microseconds], e.g. \"12:00:00.000000\""
+          "description" =>
+            "ISO8601 Time with microseconds, [hh]:[mm]:[ss].[microseconds], e.g. \"12:00:00.000000\""
         },
         "utc_datetime" => %{
           "format" => "date-time",
           "title" => "utc_datetime",
           "type" => "string",
-          "description" => "ISO8601 DateTime, [yyyy]-[mm]-[dd]T[hh]:[mm]:[ss]Z, e.g. \"2024-07-20T12:00:00Z\""
+          "description" =>
+            "ISO8601 DateTime, [yyyy]-[mm]-[dd]T[hh]:[mm]:[ss]Z, e.g. \"2024-07-20T12:00:00Z\""
         },
         "utc_datetime_usec" => %{
           "format" => "date-time",
