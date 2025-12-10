@@ -67,7 +67,9 @@ defmodule Instructor.Adapters.Anthropic do
     reask_messages_for_mode(params[:mode], raw_response)
   end
 
-  defp reask_messages_for_mode(:tools, %{"content" => [%{"input" => args, "type" => "tool_use", "id" => id, "name" => name}]}) do
+  defp reask_messages_for_mode(:tools, %{
+         "content" => [%{"input" => args, "type" => "tool_use", "id" => id, "name" => name}]
+       }) do
     [
       %{
         role: "assistant",

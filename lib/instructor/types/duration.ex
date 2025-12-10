@@ -16,7 +16,8 @@ defmodule Instructor.Types.Duration do
       type: "string",
       description: "A valid ISO8601 duration, e.g. PT3M14S",
       format: "duration",
-      pattern: "^P(?:(\\d+)Y)?(?:(\\d+)M)?(?:(\\d+)D)?(?:T(?:(\\d+)H)?(?:(\\d+)M)?(?:(\\d+(?:\\.\\d+)?)S)?)?$"
+      pattern:
+        "^P(?:(\\d+)Y)?(?:(\\d+)M)?(?:(\\d+)D)?(?:T(?:(\\d+)H)?(?:(\\d+)M)?(?:(\\d+(?:\\.\\d+)?)S)?)?$"
     }
   end
 

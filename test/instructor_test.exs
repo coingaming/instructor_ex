@@ -369,7 +369,6 @@ defmodule InstructorTest do
           field(:number, :integer)
         end
 
-
         def validate_changeset(changeset) do
           changeset
           |> Ecto.Changeset.validate_change(:number, fn :number, number ->
@@ -386,7 +385,6 @@ defmodule InstructorTest do
       test "reask" do
         mock_response(unquote(adapter), :tools, %{number: 11})
 
-
         result =
           Instructor.chat_completion(
             Keyword.merge(unquote(params),
@@ -400,7 +398,6 @@ defmodule InstructorTest do
 
         assert {:ok, %{number: number}} = result
         assert number >= 10
-
       end
     end
   end

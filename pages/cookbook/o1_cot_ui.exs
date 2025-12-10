@@ -47,6 +47,7 @@ defmodule DemoLive do
     pid = self()
 
     selected_model = socket.assigns.selected_model
+
     response_model =
       socket.assigns.output_schema
       |> Enum.map(fn {key, type} -> {String.to_atom(key), type} end)
@@ -161,7 +162,9 @@ defmodule DemoLive do
           <div class="flex justify-start items-center bg-gradient-to-r from-red-400/30 via-purple-400/20 via-20% to-white rounded-lg p-2 pl-4 pr-16 border border-gray-300 animate-gradient">
             <span class="text-3xl font-bold text-white">🍓</span>
             <img src="https://hexdocs.pm/elixir/assets/logo.png" alt="Elixir" class="h-8 ml-1" />
-            <span class="ml-6 text-lg font-medium text-gray-700">Structured Outputs <span class="text-gray-400">w/</span> Reasoning</span>
+            <span class="ml-6 text-lg font-medium text-gray-700">
+              Structured Outputs <span class="text-gray-400">w/</span> Reasoning
+            </span>
           </div>
         </div>
         <style>
