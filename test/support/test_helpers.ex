@@ -111,6 +111,85 @@ defmodule Instructor.TestHelpers do
     end)
   end
 
+  # ---------------------------------------------------------
+  # Bedrock Mock Helpers (Converse API format)
+  # ---------------------------------------------------------
+
+  def mock_bedrock_response(:tools, result) do
+    InstructorTest.MockBedrock
+    |> expect(:chat_completion, fn _params, _config ->
+      {:ok,
+       %{
+         "choices" => [
+           %{
+             "finish_reason" => "tool_calls",
+             "message" => %{
+               "tool_calls" => [
+                 %{
+                   "id" => "tooluse_e8Civ0HoDy",
+                   "function" => %{
+                     "arguments" => Jason.encode!(result),
+                     "name" => "schema"
+                   }
+                 }
+               ]
+             }
+           }
+         ]
+       }, result}
+    end)
+  end
+
+  def mock_bedrock_response(mode, result) when mode in [:json, :md_json] do
+    InstructorTest.MockBedrock
+    |> expect(:chat_completion, fn _params, _config ->
+      {:ok,
+       %{
+         "choices" => [
+           %{
+             "finish_reason" => "stop",
+             "message" => %{
+               "content" => Jason.encode!(result)
+             }
+           }
+         ]
+       }, result}
+    end)
+  end
+
+  def mock_bedrock_response_stream(:tools, result) do
+    chunks =
+      Jason.encode!(%{value: result})
+      |> String.graphemes()
+      |> Enum.chunk_every(12)
+      |> Enum.map(&Enum.join(&1, ""))
+
+    InstructorTest.MockBedrock
+    |> expect(:chat_completion, fn _params, _config ->
+      chunks
+    end)
+  end
+
+  def mock_bedrock_response_stream(mode, result) when mode in [:json, :md_json] do
+    chunks =
+      Jason.encode!(%{value: result})
+      |> String.graphemes()
+      |> Enum.chunk_every(12)
+      |> Enum.map(&Enum.join(&1, ""))
+
+    InstructorTest.MockBedrock
+    |> expect(:chat_completion, fn _params, _config ->
+      chunks
+    end)
+  end
+
+  def mock_bedrock_reask_messages do
+    InstructorTest.MockBedrock
+    |> expect(:reask_messages, fn _raw_response, _params, _config ->
+      []
+    end)
+  end
+
   def is_stream?(variable) do
     case variable do
       %Stream{} ->
