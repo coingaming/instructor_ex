@@ -134,13 +134,15 @@ defmodule Instructor.AWSEventStreamParser do
 
     {value, rest} =
       case type do
-        # Type 7 = string
-        7 ->
-          <<value_length::16, value::binary-size(value_length), rest::binary>> = rest
-          {value, rest}
-
-        _ ->
-          {nil, rest}
+        type when type in [0, 1] -> {nil, rest}
+        2 -> <<_::8, rest::binary>> = rest; {nil, rest}
+        3 -> <<_::16, rest::binary>> = rest; {nil, rest}
+        4 -> <<_::32, rest::binary>> = rest; {nil, rest}
+        5 -> <<_::64, rest::binary>> = rest; {nil, rest}
+        6 -> <<len::16, _::binary-size(len), rest::binary>> = rest; {nil, rest}
+        7 -> <<len::16, value::binary-size(len), rest::binary>> = rest; {value, rest}
+        8 -> <<_::64, rest::binary>> = rest; {nil, rest}
+        9 -> <<_::binary-size(16), rest::binary>> = rest; {nil, rest}
       end
 
     parse_headers(rest, Map.put(acc, name, value))
