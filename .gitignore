@@ -27,3 +27,4 @@ instructor-*.tar
 
 *.DS_Store
 llama.log
+.vscode
