@@ -137,8 +137,12 @@ defmodule StreamingUILive do
 
   def render(assigns) do
     ~H"""
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css" />
+    <script src="https://cdn.tailwindcss.com">
+    </script>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css"
+    />
     <div class="flex h-screen">
       <div class="w-1/3 pr-8 flex flex-col justify-center items-center px-8 py-16 border-r border-zinc-200">
         <h1 class="text-3xl font-bold mb-6">✨ AI Recipe Generator</h1>
@@ -161,7 +165,7 @@ defmodule StreamingUILive do
       </div>
 
       <div class="w-2/3 pl-8 flex flex-col justify-center overflow-y-auto bg-zinc-100 px-8 py-16">
-        <.recipe {assigns}/>
+        <.recipe {assigns} />
       </div>
     </div>
     """
@@ -169,11 +173,20 @@ defmodule StreamingUILive do
 
   defp recipe(assigns) do
     ~H"""
-    <div :if={@recipe.result != nil} class="bg-white shadow-lg rounded-lg overflow-hidden max-w-3xl mx-auto">
+    <div
+      :if={@recipe.result != nil}
+      class="bg-white shadow-lg rounded-lg overflow-hidden max-w-3xl mx-auto"
+    >
       <div class="relative">
         <div class="absolute inset-0 bg-gradient-to-b from-transparent to-black opacity-70"></div>
-        <img src={image_for_recipe(@recipe.result)} alt={@recipe.result.name} class="w-full h-64 object-cover" />
-        <h2 class="absolute bottom-4 left-4 text-3xl font-bold text-white"><%= @recipe.result.name %></h2>
+        <img
+          src={image_for_recipe(@recipe.result)}
+          alt={@recipe.result.name}
+          class="w-full h-64 object-cover"
+        />
+        <h2 class="absolute bottom-4 left-4 text-3xl font-bold text-white">
+          <%= @recipe.result.name %>
+        </h2>
       </div>
 
       <div class="p-6">
@@ -196,7 +209,9 @@ defmodule StreamingUILive do
                     <%= to_string(ingredient.quantity) %>
                   <% end %>
                 </span>
-                <span class="text-gray-700 flex-grow"><%= ingredient.unit %> <%= ingredient.name %></span>
+                <span class="text-gray-700 flex-grow">
+                  <%= ingredient.unit %> <%= ingredient.name %>
+                </span>
               </div>
             <% end %>
           </div>
@@ -207,7 +222,9 @@ defmodule StreamingUILive do
           <ol class="space-y-4">
             <%= for {step, index} <- Enum.with_index(@recipe.result.instructions) do %>
               <li class="flex">
-                <span class="bg-gray-300 text-gray-700 rounded-full w-8 h-8 flex items-center justify-center mr-4 flex-shrink-0"><%= index + 1 %></span>
+                <span class="bg-gray-300 text-gray-700 rounded-full w-8 h-8 flex items-center justify-center mr-4 flex-shrink-0">
+                  <%= index + 1 %>
+                </span>
                 <p class="text-gray-700"><%= step.step %></p>
               </li>
             <% end %>
