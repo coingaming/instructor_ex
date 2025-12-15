@@ -433,13 +433,13 @@ defmodule Instructor.Adapters.Bedrock do
   @doc false
   def build_url(model_id, config) do
     base_url = config[:runtime_url] || "https://bedrock-runtime.#{config[:region]}.amazonaws.com"
-    path = "/model/#{URI.encode(model_id)}/converse"
+    path = "/model/#{URI.encode_www_form(model_id)}/converse"
     base_url <> path
   end
 
   defp build_stream_url(model_id, config) do
     base_url = config[:runtime_url] || "https://bedrock-runtime.#{config[:region]}.amazonaws.com"
-    path = "/model/#{URI.encode(model_id)}/converse-stream"
+    path = "/model/#{URI.encode_www_form(model_id)}/converse-stream"
     base_url <> path
   end
 
