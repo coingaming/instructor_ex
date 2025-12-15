@@ -43,11 +43,25 @@ defmodule InstructorTest do
 
       :openai_mock ->
         Application.put_env(:instructor, :adapter, InstructorTest.MockOpenAI)
+
+      :bedrock ->
+        Application.put_env(:instructor, :adapter, Instructor.Adapters.Bedrock)
+
+        Application.put_env(:instructor, :bedrock,
+          api_key: System.fetch_env!("AWS_BEARER_TOKEN_BEDROCK")
+        )
+
+      :bedrock_mock ->
+        Application.put_env(:instructor, :adapter, InstructorTest.MockBedrock)
     end
   end
 
   def mock_response(:openai_mock, mode, expected) do
     TestHelpers.mock_openai_response(mode, expected)
+  end
+
+  def mock_response(:bedrock_mock, mode, expected) do
+    TestHelpers.mock_bedrock_response(mode, expected)
   end
 
   def mock_response(_, _, _), do: nil
@@ -56,10 +70,15 @@ defmodule InstructorTest do
     TestHelpers.mock_openai_response_stream(mode, expected)
   end
 
+  def mock_stream_response(:bedrock_mock, mode, expected) do
+    TestHelpers.mock_bedrock_response_stream(mode, expected)
+  end
+
   def mock_stream_response(_, _, _), do: nil
 
   for {adapter, params} <- [
         {:openai_mock, [mode: :tools, model: "gpt-4.1-mini"]},
+        {:bedrock_mock, [mode: :tools, model: "anthropic.claude-3-5-sonnet-20240620-v1:0"]},
         {:openai, [mode: :tools, model: "gpt-4.1-mini"]},
         {:openai, [mode: :json, model: "gpt-4.1-mini"]},
         {:openai, [mode: :json_schema, model: "gpt-4.1-mini"]},
@@ -69,7 +88,9 @@ defmodule InstructorTest do
         {:xai, [mode: :tools, model: "grok-2-latest"]},
         {:xai, [mode: :json_schema, model: "grok-2-latest"]},
         {:ollama, [mode: :tools, model: "llama3.1"]},
-        {:anthropic, [mode: :tools, model: "claude-3-5-sonnet-20240620", max_tokens: 1024]}
+        {:anthropic, [mode: :tools, model: "claude-3-5-sonnet-20240620", max_tokens: 1024]},
+        {:bedrock,
+         [mode: :tools, model: "anthropic.claude-3-5-sonnet-20240620-v1:0", max_tokens: 1024]}
       ] do
     describe "#{inspect(adapter)} #{params[:mode]} #{params[:model]}" do
       @tag adapter: adapter
