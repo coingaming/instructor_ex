@@ -58,9 +58,9 @@ defmodule Instructor.Adapters.Bedrock do
   @behaviour Instructor.Adapter
 
   alias Instructor.AWSEventStreamParser
-
-  @supported_modes [:tools, :json, :md_json]
+  @supported_modes ~w(tools json md_json)a
   @default_max_tokens 4096
+  @supported_image_formats ~w(png jpeg gif webp)
 
   @impl true
   def chat_completion(params, user_config \\ nil) do
@@ -77,12 +77,12 @@ defmodule Instructor.Adapters.Bedrock do
       raise "Unsupported Bedrock mode #{mode}. Supported modes: #{inspect(@supported_modes)}"
     end
 
-    body = build_converse_body(messages, max_tokens, temperature, tools)
-
-    if stream do
-      do_streaming_chat_completion(mode, model_id, body, config)
-    else
-      do_chat_completion(mode, model_id, body, tools, config)
+    with {:ok, body} <- build_converse_body(messages, max_tokens, temperature, tools) do
+      if stream do
+        do_streaming_chat_completion(mode, model_id, body, config)
+      else
+        do_chat_completion(mode, model_id, body, tools, config)
+      end
     end
   end
 
@@ -179,15 +179,25 @@ defmodule Instructor.Adapters.Bedrock do
   defp build_converse_body(messages, max_tokens, temperature, tools) do
     {system_messages, user_messages} = extract_system_messages(messages)
 
-    %{
-      "messages" => format_messages(user_messages),
-      "inferenceConfig" => %{
-        "maxTokens" => max_tokens,
-        "temperature" => temperature
+    with {:ok, formatted_messages} <- format_messages(user_messages) do
+      body = %{
+        "messages" => formatted_messages,
+        "inferenceConfig" => %{
+          "maxTokens" => max_tokens,
+          "temperature" => temperature
+        }
       }
-    }
-    |> maybe_add_system(system_messages)
-    |> maybe_add_tools(tools)
+
+      {:ok,
+       body
+       |> maybe_add_system(system_messages)
+       |> maybe_add_tools(tools)}
+    end
+  end
+
+  @doc false
+  def build_converse_body_for_test(messages, max_tokens, temperature, tools) do
+    build_converse_body(messages, max_tokens, temperature, tools)
   end
 
   defp extract_system_messages(messages) do
@@ -199,7 +209,16 @@ defmodule Instructor.Adapters.Bedrock do
   defp is_system_message?(_), do: false
 
   defp format_messages(messages) do
-    Enum.map(messages, &format_message/1)
+    Enum.reduce_while(messages, {:ok, []}, fn msg, {:ok, acc} ->
+      case format_message(msg) do
+        {:ok, formatted} -> {:cont, {:ok, [formatted | acc]}}
+        {:error, _reason} = error -> {:halt, error}
+      end
+    end)
+    |> case do
+      {:ok, acc} -> {:ok, Enum.reverse(acc)}
+      {:error, _} = error -> error
+    end
   end
 
   defp format_message(%{__bedrock_tool_use__: tool_use} = msg) do
@@ -209,39 +228,113 @@ defmodule Instructor.Adapters.Bedrock do
         input when is_map(input) -> input
       end
 
-    %{
-      "role" => to_string(msg.role),
-      "content" => [
-        %{
-          "toolUse" => %{
-            "toolUseId" => tool_use["toolUseId"],
-            "name" => "Schema",
-            "input" => input
-          }
-        }
-      ]
-    }
+    {:ok,
+     %{
+       "role" => to_string(msg.role),
+       "content" => [
+         %{
+           "toolUse" => %{
+             "toolUseId" => tool_use["toolUseId"],
+             "name" => "Schema",
+             "input" => input
+           }
+         }
+       ]
+     }}
   end
 
   defp format_message(%{__bedrock_tool_result__: tool_result} = msg) do
-    %{
-      "role" => to_string(msg.role),
-      "content" => [
-        %{
-          "toolResult" => %{
-            "toolUseId" => tool_result["toolUseId"],
-            "content" => [%{"text" => tool_result["content"]}]
-          }
-        }
-      ]
-    }
+    {:ok,
+     %{
+       "role" => to_string(msg.role),
+       "content" => [
+         %{
+           "toolResult" => %{
+             "toolUseId" => tool_result["toolUseId"],
+             "content" => [%{"text" => tool_result["content"]}]
+           }
+         }
+       ]
+     }}
   end
 
   defp format_message(msg) do
-    %{
-      "role" => get_role(msg),
-      "content" => [%{"text" => get_content(msg)}]
-    }
+    role = get_role(msg)
+    content = get_content(msg)
+
+    with {:ok, formatted_content} <- format_message_content(role, content) do
+      {:ok,
+       %{
+         "role" => role,
+         "content" => formatted_content
+       }}
+    end
+  end
+
+  defp format_message_content(_role, content) when is_binary(content) do
+    {:ok, [%{"text" => content}]}
+  end
+
+  defp format_message_content(role, content) when is_list(content) do
+    format_content_blocks(role, content)
+  end
+
+  defp format_message_content(_role, _content) do
+    {:error, "Unsupported Bedrock message content. Expected string or list of blocks."}
+  end
+
+  defp format_content_blocks(role, blocks) do
+    Enum.reduce_while(blocks, {:ok, []}, fn block, {:ok, acc} ->
+      case format_content_block(role, block) do
+        {:ok, formatted} -> {:cont, {:ok, [formatted | acc]}}
+        {:error, _reason} = error -> {:halt, error}
+      end
+    end)
+    |> case do
+      {:ok, acc} -> {:ok, Enum.reverse(acc)}
+      {:error, _} = error -> error
+    end
+  end
+
+  defp format_content_block(_role, %{"type" => "text", "text" => text}) when is_binary(text) do
+    {:ok, %{"text" => text}}
+  end
+
+  defp format_content_block(_role, %{type: "text", text: text}) when is_binary(text) do
+    {:ok, %{"text" => text}}
+  end
+
+  defp format_content_block("user", %{"type" => "image", "format" => format, "data" => data})
+       when is_binary(format) and is_binary(data) do
+    with :ok <- validate_image_format(format) do
+      {:ok, %{"image" => %{"format" => format, "source" => %{"bytes" => data}}}}
+    end
+  end
+
+  defp format_content_block("user", %{type: "image", format: format, data: data})
+       when is_binary(format) and is_binary(data) do
+    with :ok <- validate_image_format(format) do
+      {:ok, %{"image" => %{"format" => format, "source" => %{"bytes" => data}}}}
+    end
+  end
+
+  defp format_content_block(role, %{"type" => "image"}) when role != "user" do
+    {:error, "Bedrock image blocks are only supported for user messages."}
+  end
+
+  defp format_content_block(role, %{type: "image"}) when role != "user" do
+    {:error, "Bedrock image blocks are only supported for user messages."}
+  end
+
+  defp format_content_block(_role, _block) do
+    {:error, "Unsupported Bedrock content block."}
+  end
+
+  defp validate_image_format(format) when format in @supported_image_formats, do: :ok
+
+  defp validate_image_format(format) do
+    {:error,
+     "Unsupported Bedrock image format #{inspect(format)}. Supported formats: #{Enum.join(@supported_image_formats, ", ")}."}
   end
 
   defp get_role(%{role: role}), do: to_string(role)
