@@ -463,7 +463,8 @@ defmodule Instructor.Adapters.Bedrock do
   end
 
   defp parse_content_for_mode(:json, %{"choices" => [%{"message" => %{"content" => content}}]}) do
-    Jason.decode(content)
+    # Claude/Bedrock wraps JSON in markdown even in :json mode, so use the same stripping logic
+    extract_json_from_markdown(content)
   end
 
   defp parse_content_for_mode(:md_json, %{"choices" => [%{"message" => %{"content" => content}}]}) do
