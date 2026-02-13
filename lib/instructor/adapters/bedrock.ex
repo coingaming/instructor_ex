@@ -475,10 +475,15 @@ defmodule Instructor.Adapters.Bedrock do
   end
 
   defp extract_json_from_markdown(content) do
-    case Regex.run(~r/```(?:json)?\s*([\s\S]*?)\s*```/, content) do
-      [_, json] -> Jason.decode(json)
-      nil -> Jason.decode(content)
-    end
+    # Claude/Bedrock often wraps JSON in markdown code blocks
+    # Use simple string operations to strip them
+    content
+    |> String.trim()
+    |> String.replace_prefix("```json", "")
+    |> String.replace_prefix("```", "")
+    |> String.replace_suffix("```", "")
+    |> String.trim()
+    |> Jason.decode()
   end
 
   # ---------------------------------------------------------
