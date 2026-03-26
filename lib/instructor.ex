@@ -449,9 +449,9 @@ defmodule Instructor do
   defp do_chat_completion(response_model, params, config) do
     validation_context = Keyword.get(params, :validation_context, %{})
     max_retries = Keyword.get(params, :max_retries)
-    with_usage? = Keyword.get(params, :with_usage?, false)
+    metadata? = Keyword.get(params, :metadata?, false)
     mode = Keyword.get(params, :mode, :tools)
-    params = params |> Keyword.delete(:with_usage?) |> then(&params_for_mode(mode, response_model, &1))
+    params = params |> Keyword.delete(:metadata?) |> then(&params_for_mode(mode, response_model, &1))
 
     model =
       if is_ecto_schema(response_model) do
@@ -467,8 +467,8 @@ defmodule Instructor do
            {call_validate(response_model, changeset, validation_context), raw_response} do
       result = changeset |> Ecto.Changeset.apply_changes()
 
-      if with_usage? do
-        {:ok, result, Map.get(raw_response, "usage")}
+      if metadata? do
+        {:ok, result, %{usage: Map.get(raw_response, "usage", %{})}}
       else
         {:ok, result}
       end
