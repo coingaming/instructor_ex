@@ -118,6 +118,7 @@ defmodule Instructor do
   """
   @spec chat_completion(Keyword.t(), any()) ::
           {:ok, Ecto.Schema.t()}
+          | {:ok, Ecto.Schema.t(), map()}
           | {:error, Ecto.Changeset.t()}
           | {:error, String.t()}
           | stream()
@@ -448,8 +449,9 @@ defmodule Instructor do
   defp do_chat_completion(response_model, params, config) do
     validation_context = Keyword.get(params, :validation_context, %{})
     max_retries = Keyword.get(params, :max_retries)
+    with_usage? = Keyword.get(params, :with_usage?, false)
     mode = Keyword.get(params, :mode, :tools)
-    params = params_for_mode(mode, response_model, params)
+    params = params |> Keyword.delete(:with_usage?) |> then(&params_for_mode(mode, response_model, &1))
 
     model =
       if is_ecto_schema(response_model) do
@@ -463,7 +465,13 @@ defmodule Instructor do
            {cast_all(model, params), raw_response},
          {%Ecto.Changeset{valid?: true} = changeset, _raw_response} <-
            {call_validate(response_model, changeset, validation_context), raw_response} do
-      {:ok, changeset |> Ecto.Changeset.apply_changes()}
+      result = changeset |> Ecto.Changeset.apply_changes()
+
+      if with_usage? do
+        {:ok, result, Map.get(raw_response, "usage")}
+      else
+        {:ok, result}
+      end
     else
       {%Ecto.Changeset{} = changeset, raw_response} ->
         if max_retries > 0 do

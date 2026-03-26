@@ -405,7 +405,6 @@ defmodule Instructor.Adapters.Bedrock do
     message = output["message"] || %{}
     content = message["content"] || []
     stop_reason = response["stopReason"]
-
     tool_use = Enum.find(content, &(&1["toolUse"] != nil))
 
     if tool_use && tools != [] do
@@ -427,7 +426,8 @@ defmodule Instructor.Adapters.Bedrock do
             },
             "finish_reason" => normalize_stop_reason(stop_reason)
           }
-        ]
+        ],
+        "usage" => normalize_usage(response["usage"])
       }
     else
       text_content =
@@ -444,9 +444,16 @@ defmodule Instructor.Adapters.Bedrock do
             },
             "finish_reason" => normalize_stop_reason(stop_reason)
           }
-        ]
+        ],
+        "usage" => normalize_usage(response["usage"])
       }
     end
+  end
+
+  defp normalize_usage(nil), do: %{}
+
+  defp normalize_usage(%{"inputTokens" => input, "outputTokens" => output, "totalTokens" => total}) do
+    %{"input_tokens" => input, "output_tokens" => output, "total_tokens" => total}
   end
 
   defp normalize_stop_reason("end_turn"), do: "stop"
